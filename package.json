@@ -1,0 +1,21 @@
+{
+  "name": "@vyckr/funda",
+  "version": "0.1.0",
+  "devDependencies": {
+    "@types/node": "^20.4.2",
+    "bun-types": "^1.1.21"
+  },
+  "bin": {
+    "funda": "./src/start.js"
+  },
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "fundamentals",
+    "web",
+    "framework",
+    "javascript",
+    "bun"
+  ],
+  "author": "Chidelma"
+}
