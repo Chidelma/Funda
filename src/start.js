@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { watch } from 'node:fs'
+import { Glob } from 'bun'
 
 try {
 
