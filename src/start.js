@@ -112,70 +112,35 @@ function configLogger() {
      * @param  {any[]} args 
      * @returns 
      */
-    console.info = (...args) => {
-        const info = `[${formatDate()}]\x1b[32m INFO${reset} (${process.pid}) ${formatMsg(...args)}`
-        log(info)
-        if(context.getStore()) {
-            const logWriter = context.getStore()
-            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${info.replace(reset, '').replace('\x1b[32m', '')}\n`, type: "info" })
-        }
-    }
+    console.info = (...args) => log(`[${formatDate()}]\x1b[32m INFO${reset} (${process.pid}) ${formatMsg(...args)}`)
 
     /**
      * 
      * @param  {any[]} args 
      * @returns 
      */
-    console.error = (...args) => {
-        const err = `[${formatDate()}]\x1b[31m ERROR${reset} (${process.pid}) ${formatMsg(...args)}`
-        log(err)
-        if(context.getStore()) {
-            const logWriter = context.getStore()
-            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${err.replace(reset, '').replace('\x1b[31m', '')}\n`, type: "error" })
-        }
-    }
+    console.error = (...args) => log(`[${formatDate()}]\x1b[31m ERROR${reset} (${process.pid}) ${formatMsg(...args)}`)
 
     /**
      * 
      * @param  {any[]} args 
      * @returns 
      */
-    console.debug = (...args) => {
-        const bug = `[${formatDate()}]\x1b[36m DEBUG${reset} (${process.pid}) ${formatMsg(...args)}`
-        log(bug)
-        if(context.getStore()) {
-            const logWriter = context.getStore()
-            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${bug.replace(reset, '').replace('\x1b[36m', '')}\n`, type: "debug" })
-        }
-    }
+    console.debug = (...args) => log(`[${formatDate()}]\x1b[36m DEBUG${reset} (${process.pid}) ${formatMsg(...args)}`)
 
     /**
      * 
      * @param  {any[]} args 
      * @returns 
      */
-    console.warn = (...args) => {
-        const warn = `[${formatDate()}]\x1b[33m WARN${reset} (${process.pid}) ${formatMsg(...args)}`
-        log(warn)
-        if(context.getStore()) {
-            const logWriter = context.getStore()
-            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${warn.replace(reset, '').replace('\x1b[33m', '')}\n`, type: "warn" })
-        }
-    }
+    console.warn = (...args) => log(`[${formatDate()}]\x1b[33m WARN${reset} (${process.pid}) ${formatMsg(...args)}`)
 
     /**
      * 
      * @param  {any[]} args 
      * @returns 
      */
-    console.trace = (...args) => {
-        const trace = `[${formatDate()}]\x1b[35m TRACE${reset} (${process.pid}) ${formatMsg(...args)}`
-        log(trace)
-        if(context.getStore()) {
-            const logWriter = context.getStore()
-            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${trace.replace(reset, '').replace('\x1b[35m', '')}\n`, type: "trace" })
-        }
-    }
+    console.trace = (...args) => log(`[${formatDate()}]\x1b[35m TRACE${reset} (${process.pid}) ${formatMsg(...args)}`)
 }
 
 function formatDate() {
