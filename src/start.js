@@ -3,7 +3,7 @@ import { watch } from 'node:fs'
 
 try {
 
-    const module = await import(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`)
+    const module = await import(`${process.cwd()}/src/app.js`)
 
     const App = module.default
 
