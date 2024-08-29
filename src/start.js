@@ -1,14 +1,17 @@
 #!/usr/bin/env bun
-import App from "./app.js";
 import { watch } from 'node:fs'
 
 try {
+
+    const module = await import(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`)
+
+    const App = module.default
 
     const start = Date.now()
 
     await validateRoutes()
 
-    watch(`${process.cwd()}/pages`, { recursive: true }, async () => await validateRoutes())
+    watch(`${process.cwd()}/src/pages`, { recursive: true }, async () => await validateRoutes())
     
     configLogger()
 
@@ -73,11 +76,11 @@ async function validateRoutes() {
         pageSlugs[route] = slugs
     }
 
-    const files = Array.from(new Glob(`**/*.html`).scanSync({ cwd: `${process.cwd()}/pages` }))
+    const files = Array.from(new Glob(`**/*.html`).scanSync({ cwd: `${process.cwd()}/src/pages` }))
 
     for(const route of files) validateRoute(route)
 
-    await Promise.allSettled([Bun.write(`${process.cwd()}/indexes.json`, JSON.stringify(Array.from(indexes))), Bun.write(`${process.cwd()}/slugs.json`, JSON.stringify(pageSlugs))])
+    await Promise.allSettled([Bun.write(`${process.cwd()}/src/indexes.json`, JSON.stringify(Array.from(indexes))), Bun.write(`${process.cwd()}/src/slugs.json`, JSON.stringify(pageSlugs))])
 }
 
 
