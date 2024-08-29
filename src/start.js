@@ -113,11 +113,11 @@ function configLogger() {
      * @returns 
      */
     console.info = (...args) => {
-        const info = `[${Tach.formatDate()}]\x1b[32m INFO${reset} (${process.pid}) ${Tach.formatMsg(...args)}`
+        const info = `[${formatDate()}]\x1b[32m INFO${reset} (${process.pid}) ${formatMsg(...args)}`
         log(info)
-        if(Tach.context.getStore()) {
-            const logWriter = Tach.context.getStore()
-            if(logWriter && Tach.dbPath && Tach.saveLogs) logWriter.push({ date: Date.now(), msg: `${info.replace(reset, '').replace('\x1b[32m', '')}\n`, type: "info" })
+        if(context.getStore()) {
+            const logWriter = context.getStore()
+            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${info.replace(reset, '').replace('\x1b[32m', '')}\n`, type: "info" })
         }
     }
 
@@ -127,11 +127,11 @@ function configLogger() {
      * @returns 
      */
     console.error = (...args) => {
-        const err = `[${Tach.formatDate()}]\x1b[31m ERROR${reset} (${process.pid}) ${Tach.formatMsg(...args)}`
+        const err = `[${formatDate()}]\x1b[31m ERROR${reset} (${process.pid}) ${formatMsg(...args)}`
         log(err)
-        if(Tach.context.getStore()) {
-            const logWriter = Tach.context.getStore()
-            if(logWriter && Tach.dbPath && Tach.saveLogs) logWriter.push({ date: Date.now(), msg: `${err.replace(reset, '').replace('\x1b[31m', '')}\n`, type: "error" })
+        if(context.getStore()) {
+            const logWriter = context.getStore()
+            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${err.replace(reset, '').replace('\x1b[31m', '')}\n`, type: "error" })
         }
     }
 
@@ -141,11 +141,11 @@ function configLogger() {
      * @returns 
      */
     console.debug = (...args) => {
-        const bug = `[${Tach.formatDate()}]\x1b[36m DEBUG${reset} (${process.pid}) ${Tach.formatMsg(...args)}`
+        const bug = `[${formatDate()}]\x1b[36m DEBUG${reset} (${process.pid}) ${formatMsg(...args)}`
         log(bug)
-        if(Tach.context.getStore()) {
-            const logWriter = Tach.context.getStore()
-            if(logWriter && Tach.dbPath && Tach.saveLogs) logWriter.push({ date: Date.now(), msg: `${bug.replace(reset, '').replace('\x1b[36m', '')}\n`, type: "debug" })
+        if(context.getStore()) {
+            const logWriter = context.getStore()
+            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${bug.replace(reset, '').replace('\x1b[36m', '')}\n`, type: "debug" })
         }
     }
 
@@ -155,11 +155,11 @@ function configLogger() {
      * @returns 
      */
     console.warn = (...args) => {
-        const warn = `[${Tach.formatDate()}]\x1b[33m WARN${reset} (${process.pid}) ${Tach.formatMsg(...args)}`
+        const warn = `[${formatDate()}]\x1b[33m WARN${reset} (${process.pid}) ${formatMsg(...args)}`
         log(warn)
-        if(Tach.context.getStore()) {
-            const logWriter = Tach.context.getStore()
-            if(logWriter && Tach.dbPath && Tach.saveLogs) logWriter.push({ date: Date.now(), msg: `${warn.replace(reset, '').replace('\x1b[33m', '')}\n`, type: "warn" })
+        if(context.getStore()) {
+            const logWriter = context.getStore()
+            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${warn.replace(reset, '').replace('\x1b[33m', '')}\n`, type: "warn" })
         }
     }
 
@@ -169,11 +169,41 @@ function configLogger() {
      * @returns 
      */
     console.trace = (...args) => {
-        const trace = `[${Tach.formatDate()}]\x1b[35m TRACE${reset} (${process.pid}) ${Tach.formatMsg(...args)}`
+        const trace = `[${formatDate()}]\x1b[35m TRACE${reset} (${process.pid}) ${formatMsg(...args)}`
         log(trace)
-        if(Tach.context.getStore()) {
-            const logWriter = Tach.context.getStore()
-            if(logWriter && Tach.dbPath && Tach.saveLogs) logWriter.push({ date: Date.now(), msg: `${trace.replace(reset, '').replace('\x1b[35m', '')}\n`, type: "trace" })
+        if(context.getStore()) {
+            const logWriter = context.getStore()
+            if(logWriter && dbPath && saveLogs) logWriter.push({ date: Date.now(), msg: `${trace.replace(reset, '').replace('\x1b[35m', '')}\n`, type: "trace" })
         }
     }
+}
+
+function formatDate() {
+    return new Date().toISOString().replace('T', ' ').replace('Z', '')
+}
+
+/**
+ * 
+ * @param  {any[]} msg 
+ * @returns 
+ */
+function formatMsg(...msg) {
+
+    if(msg instanceof Set) return "\n" + JSON.stringify(Array.from(msg), null, 2)
+    
+    else if(msg instanceof Map) return "\n" + JSON.stringify(Object.fromEntries(msg), null, 2)
+
+    else if(msg instanceof FormData) {
+
+        /** @type {Record<string, any>} */
+        const formEntries = {}
+        msg.forEach((val, key) => formEntries[key] = val)
+        return "\n" + JSON.stringify(formEntries, null, 2)
+    }
+
+    else if(Array.isArray(msg) 
+        || (typeof msg === 'object' && !Array.isArray(msg))
+        || (typeof msg === 'object' && msg !== null)) return "\n" + JSON.stringify(msg, null, 2) 
+
+    return msg
 }
