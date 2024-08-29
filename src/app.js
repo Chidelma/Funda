@@ -22,7 +22,7 @@ const App = {
         const slugs = pathSlugs[`${pageSegs.join('/')}`] || {}
     
         for (let i = 0; i < pathSegs.length; i++) {
-            if (slugs[routeSegs[i]] && pageSegs[i] !== pathSegs[i]) {
+            if (slugs[pathSegs[i]] && pageSegs[i] !== pathSegs[i]) {
                 return false;
             }
         }
