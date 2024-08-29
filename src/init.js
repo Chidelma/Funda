@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 import { rename, mkdir } from 'node:fs/promises'
 
 await Promise.allSettled([
