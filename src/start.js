@@ -17,11 +17,12 @@ try {
     configLogger()
 
     const server = Bun.serve({
-        fetch: async (req) => {
-            await App.renderPage(new URL(req.url))
+        async fetch(req) {
+            const url = new URL(req.url);
+            return await handleRequest(url);
         },
-        port: 3000
-    })
+        port: 3000, // or any other port
+    });
 
     process.on('SIGINT', () => process.exit(0))
 
@@ -29,6 +30,27 @@ try {
 
 } catch (error) {
     console.error(error)
+}
+
+/**
+ * Handle HTTP request and invoke renderPage.
+ * @param {URL} url
+ */
+async function handleRequest(url) {
+    try {
+        // Trigger renderPage whenever a request is received
+        await this.renderPage(url);
+
+        // Return the updated HTML content after rendering
+        return new Response(document.body.innerHTML, {
+            headers: {
+                'Content-Type': 'text/html',
+            },
+        });
+
+    } catch (error) {
+        return new Response(`Error: ${error.message}`, { status: 500 });
+    }
 }
 
 
