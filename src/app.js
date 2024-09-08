@@ -104,7 +104,7 @@ const App = {
         ]);
 
         App.initBody = await response.text();
-        window.exports = module;
+        globalThis.exports = module;
 
         if (!App.isRendering) {
             App.isRendering = true;
@@ -211,7 +211,7 @@ const App = {
 
                         if (['input', 'change', 'submit'].includes(eventName)) {
 
-                            window[attribute.value](e.target.value);
+                            globalThis[attribute.value](e.target.value);
 
                             if (!App.isRendering) {
                                 App.isRendering = true;
@@ -282,28 +282,28 @@ const App = {
             if(storedValue) {
 
                 try {
-                    window[key] = JSON.parse(storedValue)
+                    globalThis[key] = JSON.parse(storedValue)
                 } catch {
-                    window[key] = storedValue
+                    globalThis[key] = storedValue
                 }
 
             } else {
 
-                const value = window.exports[key].get()
+                const value = globalThis.exports[key].get()
 
-                if(window.exports.persist) {
+                if(globalThis.exports.persist) {
 
                     if(typeof value === 'object') sessionStorage.setItem(storeKey, JSON.stringify(value))
                     else sessionStorage.setItem(storeKey, value)
                 }
 
-                window[key] = value
+                globalThis[key] = value
             }
         }
 
-        for (const key in window.exports) {
+        for (const key in globalThis.exports) {
 
-            const store = window.exports[key];
+            const store = globalThis.exports[key];
 
             if (store && store.subscribe) {
 
@@ -317,7 +317,7 @@ const App = {
                         else sessionStorage.setItem(storeKey, val)
                     }
 
-                    window[key] = val;
+                    globalThis[key] = val;
 
                     if (!App.isRendering) {
                         App.isRendering = true;
@@ -330,7 +330,7 @@ const App = {
 
                 cacheValue(key);
 
-            } else window[key] = store;
+            } else globalThis[key] = store;
         }
 
         renderHTML();
@@ -358,7 +358,7 @@ const App = {
  * @param {any} initialValue 
  * @param {boolean} persist 
  */
-window.$state = (initialValue, persist = false) => {
+globalThis.$state = (initialValue, persist = false) => {
 
     let value = initialValue;
 
@@ -410,6 +410,6 @@ window.$state = (initialValue, persist = false) => {
     }
 }
 
-// await App.renderPage(new URL(window.location.href))
+// await App.renderPage(new URL(globalThis.location.href))
 
 export default App

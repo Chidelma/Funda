@@ -18,6 +18,7 @@ try {
 
     const server = Bun.serve({
         async fetch(req) {
+            console.log(req.url)
             const url = new URL(req.url);
             return await handleRequest(url, App);
         },
