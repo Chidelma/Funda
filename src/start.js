@@ -19,7 +19,7 @@ try {
     const server = Bun.serve({
         async fetch(req) {
             const url = new URL(req.url);
-            return await handleRequest(url);
+            return await handleRequest(url, App);
         },
         port: 3000, // or any other port
     });
@@ -36,10 +36,10 @@ try {
  * Handle HTTP request and invoke renderPage.
  * @param {URL} url
  */
-async function handleRequest(url) {
+async function handleRequest(url, app) {
     try {
         // Trigger renderPage whenever a request is received
-        await this.renderPage(url);
+        await app.renderPage(url);
 
         // Return the updated HTML content after rendering
         return new Response(document.body.innerHTML, {
