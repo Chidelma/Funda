@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { mkdir, rename, write, rm, exists } from 'node:fs/promises'
+import { mkdir, rename, rm, exists } from 'node:fs/promises'
 
 const commad = process.argv[2]
 
@@ -32,14 +32,14 @@ async function initialize() {
     await Promise.allSettled([
         rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`, `${process.cwd()}/src/app.js`),
         rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${process.cwd()}/src/app.html`),
-        write(`${process.cwd()}/src/pages/index.html`, '<h1>Hello World</h1>'),
-        write(`${process.cwd()}/src/pages/index.js`, 'document.title = "Home\n\nconst { slugs, params } = $ctx"')
+        Bun.write(`${process.cwd()}/src/pages/index.html`, '<h1>Hello World</h1>'),
+        Bun.write(`${process.cwd()}/src/pages/index.js`, 'document.title = "Home" \n\nconst { slugs, params } = $ctx')
     ])
 
     await Promise.allSettled([
-        write(`${process.cwd()}/src/indexes.json`, '["/"]'),
-        write(`${process.cwd()}/src/slugs.json`, '{}'),
-        write(`${process.cwd()}/src/layouts.json`, '[]')
+        Bun.write(`${process.cwd()}/src/indexes.json`, JSON.stringify(['/'])),
+        Bun.write(`${process.cwd()}/src/slugs.json`, '{}'),
+        Bun.write(`${process.cwd()}/src/layouts.json`, '[]')
     ])
 }
 
