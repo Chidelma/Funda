@@ -87,7 +87,7 @@ const App = {
             globalThis.$ctx = { params, slugs };
         }
 
-        if (!page) throw new Error(`Page ${url.pathname} not found`, { cause: 404 });
+        if(!page) throw new Error(`Page ${url.pathname} not found`, { cause: 404 });
 
         await this.loadPage(page);
     },
@@ -410,6 +410,4 @@ globalThis.$state = (initialValue, persist = false) => {
     }
 }
 
-// await App.renderPage(new URL(globalThis.location.href))
-
-export default App
+await App.renderPage(new URL(globalThis.location.href))

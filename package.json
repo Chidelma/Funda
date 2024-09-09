@@ -6,8 +6,7 @@
     "bun-types": "^1.1.21"
   },
   "bin": {
-    "mental": "./src/start.js",
-    "funda": "./src/init.js"
+    "mental": "./src/mental.js"
   },
   "type": "module",
   "license": "MIT",
