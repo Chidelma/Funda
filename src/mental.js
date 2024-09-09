@@ -78,6 +78,8 @@ async function addPage(path) {
     if(await exists(`${prefix}/index.html`)) throw new Error(`Page ${path} already exists`)
     if(await exists(`${prefix}/index.js`)) throw new Error(`Page ${path} already exists`)
 
+    await mkdir(prefix, { recursive: true })
+
     Bun.file(`${prefix}/index.html`).writer().end()
     Bun.file(`${prefix}/index.js`).writer().end()
 
