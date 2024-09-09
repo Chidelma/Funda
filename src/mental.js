@@ -68,8 +68,6 @@ async function addPage(path) {
             if(pattern.test(path)) slugs[path] = idx
         })
 
-        indexes.add(paths.join('/'))
-
         pageSlugs[route] = slugs
     }
 
