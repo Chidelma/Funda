@@ -5,7 +5,7 @@ const commad = process.argv[2]
 
 switch(commad) {
     case 'init':
-        await initialize()
+        await initialize(process.argv[3])
         break;
     case 'route':
         if(process.argv[3] === "--add") await addRoute(process.argv[4])
@@ -22,24 +22,26 @@ switch(commad) {
 }
 
 
-async function initialize() {
+async function initialize(directory) {
+
+    const prefix = directory ? `${process.cwd()}/${directory}` : process.cwd()
 
     await Promise.allSettled([
-        mkdir(`${process.cwd()}/routes`, { recursive: true }),
-        mkdir(`${process.cwd()}/layouts`, { recursive: true })
+        mkdir(`${prefix}/routes`, { recursive: true }),
+        mkdir(`${prefix}/layouts`, { recursive: true })
     ])
 
     await Promise.allSettled([
-        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${process.cwd()}/app.html`),
-        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`, `${process.cwd()}/app.js`),
+        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${prefix}/app.html`),
+        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`, `${prefix}/app.js`),
         Bun.write(`${process.cwd()}/routes/index.html`, '<h1>Hello World</h1>'),
         Bun.write(`${process.cwd()}/routes/index.js`, 'document.title = "Home" \n\nconst { slugs, params } = $ctx')
     ])
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/routes.json`, '[]'),
-        Bun.write(`${process.cwd()}/slugs.json`, '{}'),
-        Bun.write(`${process.cwd()}/layouts.json`, '[]')
+        Bun.write(`${prefix}/routes.json`, '[]'),
+        Bun.write(`${prefix}/slugs.json`, '{}'),
+        Bun.write(`${prefix}/layouts.json`, '[]')
     ])
 }
 

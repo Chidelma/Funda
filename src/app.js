@@ -55,7 +55,7 @@ const App = {
             const routes = await this.fetchJSON(`${location.origin}/${this.routesDir}.${this.jsonExt}`);
             for(const route of routes) {
                 const res = await fetch(`${location.origin}/${this.routesDir}/${route}/${this.indexKey}.${this.htmlExt}`);
-                this.routes.set(page, await res.text());
+                this.routes.set(route, await res.text());
             }
         } 
 
@@ -328,7 +328,7 @@ const App = {
          */
         const handleStoreUpdate = (globalKey, value, storageType, storeKey) => {
 
-            if (typeof value === 'object')storageType.setItem(storeKey, JSON.stringify(value))
+            if (typeof value === 'object') storageType.setItem(storeKey, JSON.stringify(value))
             else storageType.setItem(storeKey, value)
     
             globalThis[globalKey] = value
@@ -342,15 +342,22 @@ const App = {
          */
         const restoreValueFromStorage = (globalKey, storageType, storeKey) => {
 
+            let restored = false
+
             const storedValue = storageType.getItem(storeKey)
     
             if (storedValue) {
+
                 try {
                     globalThis[globalKey] = JSON.parse(storedValue)
                 } catch {
                     globalThis[globalKey] = storedValue
                 }
+
+                restored = true
             }
+
+            return restored
         }
     
         /**
@@ -361,7 +368,7 @@ const App = {
         const subscribeToStore = (globalKey, store) => {
 
             const storeKey = `${globalThis.$route}/${globalKey}`
-            const storageType = globalThis[`${key.startsWith('$') ? 'session' : 'local'}Storage`]
+            const storageType = globalThis[`${globalKey.startsWith('$') ? 'session' : 'local'}Storage`]
     
             store.subscribe(val => {
 
@@ -376,8 +383,9 @@ const App = {
                 App.indexEvents(document.body.children)
             })
     
-            restoreValueFromStorage(globalKey, storageType, storeKey)
-            globalThis[globalKey] = store.get()
+            const restored = restoreValueFromStorage(globalKey, storageType, storeKey)
+            
+            if(!restored) handleStoreUpdate(globalKey, store.get(), storageType, storeKey)
         }
         
         /**
@@ -387,13 +395,15 @@ const App = {
          */
         const processGlobalValue = (globalKey, value) => {
 
-            if (globalKey.startsWith('$') || globalKey.startsWith('&')) {
+            if (globalKey.startsWith('$') || globalKey.startsWith('_')) {
 
                 const storeKey = `${globalThis.$route}/${globalKey}`
 
                 const storageType = globalThis[`${globalKey.startsWith('$') ? 'session' : 'local'}Storage`]
     
-                restoreValueFromStorage(globalKey, storageType, storeKey)
+                const restored = restoreValueFromStorage(globalKey, storageType, storeKey)
+
+                if(!restored) handleStoreUpdate(globalKey, value, storageType, storeKey)
 
             } else globalThis[globalKey] = value
         }
