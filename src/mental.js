@@ -30,14 +30,13 @@ async function initialize() {
     ])
 
     await Promise.allSettled([
-        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`, `${process.cwd()}/src/app.js`),
         rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${process.cwd()}/src/app.html`),
         Bun.write(`${process.cwd()}/src/pages/index.html`, '<h1>Hello World</h1>'),
         Bun.write(`${process.cwd()}/src/pages/index.js`, 'document.title = "Home" \n\nconst { slugs, params } = $ctx')
     ])
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/src/indexes.json`, JSON.stringify(['/'])),
+        Bun.write(`${process.cwd()}/src/pages.json`, '[]'),
         Bun.write(`${process.cwd()}/src/slugs.json`, '{}'),
         Bun.write(`${process.cwd()}/src/layouts.json`, '[]')
     ])
@@ -45,8 +44,8 @@ async function initialize() {
 
 async function addPage(path) {
 
-    const [indexes, pageSlugs] = await Promise.all([
-        Bun.file(`${process.cwd()}/src/indexes.json`).json(),
+    const [pages, pageSlugs] = await Promise.all([
+        Bun.file(`${process.cwd()}/src/pages.json`).json(),
         Bun.file(`${process.cwd()}/src/slugs.json`).json(),
     ])
 
@@ -83,18 +82,18 @@ async function addPage(path) {
     Bun.file(`${prefix}/index.html`).writer().end()
     Bun.file(`${prefix}/index.js`).writer().end()
 
-    indexes.push(path)
+    pages.push(path)
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/src/indexes.json`, JSON.stringify(indexes)),
+        Bun.write(`${process.cwd()}/src/pages.json`, JSON.stringify(pages)),
         Bun.write(`${process.cwd()}/src/slugs.json`, JSON.stringify(pageSlugs))
     ])
 }
 
 async function rmPage(path) {
 
-    const [indexes, pageSlugs] = await Promise.all([
-        Bun.file(`${process.cwd()}/src/indexes.json`).json(),
+    const [pages, pageSlugs] = await Promise.all([
+        Bun.file(`${process.cwd()}/src/pages.json`).json(),
         Bun.file(`${process.cwd()}/src/slugs.json`).json(),
     ])
 
@@ -103,11 +102,11 @@ async function rmPage(path) {
     if(await exists(`${prefix}/index.html`)) await rm(`${prefix}/index.html`)
     if(await exists(`${prefix}/index.js`)) await rm(`${prefix}/index.js`)
 
-    indexes.splice(indexes.indexOf(path), 1)
+    pages.splice(indexes.indexOf(path), 1)
     delete pageSlugs[path]
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/src/indexes.json`, JSON.stringify(indexes)),
+        Bun.write(`${process.cwd()}/src/pages.json`, JSON.stringify(pages)),
         Bun.write(`${process.cwd()}/src/slugs.json`, JSON.stringify(pageSlugs))
     ])
 }
