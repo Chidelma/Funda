@@ -31,6 +31,7 @@ async function initialize() {
 
     await Promise.allSettled([
         rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${process.cwd()}/app.html`),
+        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.js`, `${process.cwd()}/app.js`),
         Bun.write(`${process.cwd()}/routes/index.html`, '<h1>Hello World</h1>'),
         Bun.write(`${process.cwd()}/routes/index.js`, 'document.title = "Home" \n\nconst { slugs, params } = $ctx')
     ])
