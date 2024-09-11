@@ -79,7 +79,7 @@ const App = {
 
         App.initBody = this.routes.get('/');
 
-        globalThis.exports = await import(`${this.routesDir}/${this.indexKey}.${this.jsExt}`);
+        globalThis.exports = await import(`/${this.routesDir}/${this.indexKey}.${this.jsExt}`);
 
         if (!App.isRendering) {
             App.isRendering = true;
@@ -161,7 +161,7 @@ const App = {
 
         App.initBody = this.routes.get(route)
 
-        globalThis.exports = await import(`${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`);
+        globalThis.exports = await import(`/${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`);
 
         if (!App.isRendering) {
             App.isRendering = true;
