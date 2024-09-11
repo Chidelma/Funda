@@ -28,20 +28,20 @@ const App = {
 
     /**
      * Check if the page segments match the path segments.
-     * @param {string[]} pageSegs
+     * @param {string[]} routeSegs
      * @param {string[]} pathSegs
      * @returns {boolean}
      */
-    pathsMatch(pageSegs, pathSegs) {
+    pathsMatch(routeSegs, pathSegs) {
 
-        if (pageSegs.length !== pathSegs.length) return false;
+        if (routeSegs.length !== pathSegs.length) return false;
 
         const pathSlugs = JSON.parse(sessionStorage.getItem(this.slugsKey))
         
-        const slugs = pathSlugs[`${pageSegs.join('/')}`] || {};
+        const slugs = pathSlugs[`${routeSegs.join('/')}`] || {};
 
         for (let i = 0; i < pathSegs.length; i++) {
-            if (slugs[pathSegs[i]] && pageSegs[i] !== pathSegs[i]) {
+            if (slugs[pathSegs[i]] && routeSegs[i] !== pathSegs[i]) {
                 return false;
             }
         }
