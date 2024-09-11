@@ -6,7 +6,7 @@ const App = {
     layouts: new Map(),
     routes: new Map(),
 
-    pagesDir: 'pages',
+    routesDir: 'routes',
     layoutsDir: 'layouts',
     elementsVar: 'elements',
     slugsKey: '_slugs',
@@ -52,9 +52,9 @@ const App = {
     async initializeAssets() {
 
         if(this.routes.size === 0) {
-            const pages = await this.fetchJSON(`${this.pagesDir}.${this.jsonExt}`);
-            for(const page of pages) {
-                const res = await fetch(`${this.pagesDir}/${page}/${this.indexKey}.${this.htmlExt}`);
+            const routes = await this.fetchJSON(`${this.routesDir}.${this.jsonExt}`);
+            for(const route of routes) {
+                const res = await fetch(`${this.routesDir}/${route}/${this.indexKey}.${this.htmlExt}`);
                 this.routes.set(page, await res.text());
             }
         } 
@@ -73,13 +73,13 @@ const App = {
         }
 
         if(!this.routes.has('/')) {
-            const res = await fetch(`${this.pagesDir}/${this.indexKey}.${this.htmlExt}`);
+            const res = await fetch(`${this.routesDir}/${this.indexKey}.${this.htmlExt}`);
             this.routes.set('/', await res.text());
         }
 
         App.initBody = this.routes.get('/');
 
-        globalThis.exports = await import(`./${this.pagesDir}/${this.indexKey}.${this.jsExt}`);
+        globalThis.exports = await import(`${this.routesDir}/${this.indexKey}.${this.jsExt}`);
 
         if (!App.isRendering) {
             App.isRendering = true;
@@ -161,7 +161,7 @@ const App = {
 
         App.initBody = this.routes.get(route)
 
-        globalThis.exports = await import(`./${this.pagesDir}/${route}/${this.indexKey}.${this.jsExt}`);
+        globalThis.exports = await import(`${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`);
 
         if (!App.isRendering) {
             App.isRendering = true;
