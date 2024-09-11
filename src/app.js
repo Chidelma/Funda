@@ -52,15 +52,15 @@ const App = {
     async initializeAssets() {
 
         if(this.routes.size === 0) {
-            const routes = await this.fetchJSON(`${this.routesDir}.${this.jsonExt}`);
+            const routes = await this.fetchJSON(`${location.origin}/${this.routesDir}.${this.jsonExt}`);
             for(const route of routes) {
-                const res = await fetch(`${this.routesDir}/${route}/${this.indexKey}.${this.htmlExt}`);
+                const res = await fetch(`${location.origin}/${this.routesDir}/${route}/${this.indexKey}.${this.htmlExt}`);
                 this.routes.set(page, await res.text());
             }
         } 
 
         if(this.layouts.size === 0) {
-            const layouts = await this.fetchJSON(`${this.layoutsDir}.${this.jsonExt}`);
+            const layouts = await this.fetchJSON(`${location.origin}/${this.layoutsDir}.${this.jsonExt}`);
             for(const layout of layouts) {
                 const res = await fetch(`${this.layoutsDir}/${layout}.${this.htmlExt}`);
                 this.layouts.set(layout, await res.text());
@@ -69,17 +69,17 @@ const App = {
 
         // Load slugs
         if(sessionStorage.getItem(this.slugsKey) === null) {
-            sessionStorage.setItem(this.slugsKey, JSON.stringify(await this.fetchJSON(`slugs.${this.jsonExt}`)));
+            sessionStorage.setItem(this.slugsKey, JSON.stringify(await this.fetchJSON(`${location.origin}/slugs.${this.jsonExt}`)));
         }
 
         if(!this.routes.has('/')) {
-            const res = await fetch(`${this.routesDir}/${this.indexKey}.${this.htmlExt}`);
+            const res = await fetch(`${location.origin}/${this.routesDir}/${this.indexKey}.${this.htmlExt}`);
             this.routes.set('/', await res.text());
         }
 
         App.initBody = this.routes.get('/');
 
-        globalThis.exports = await import(`/${this.routesDir}/${this.indexKey}.${this.jsExt}`);
+        globalThis.exports = await import(`${location.origin}/${this.routesDir}/${this.indexKey}.${this.jsExt}`);
 
         if (!App.isRendering) {
             App.isRendering = true;
@@ -161,7 +161,7 @@ const App = {
 
         App.initBody = this.routes.get(route)
 
-        globalThis.exports = await import(`/${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`);
+        globalThis.exports = await import(`${location.origin}/${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`);
 
         if (!App.isRendering) {
             App.isRendering = true;

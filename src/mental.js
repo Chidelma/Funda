@@ -25,20 +25,20 @@ switch(commad) {
 async function initialize() {
 
     await Promise.allSettled([
-        mkdir(`${process.cwd()}/src/routes`, { recursive: true }),
-        mkdir(`${process.cwd()}/src/layouts`, { recursive: true })
+        mkdir(`${process.cwd()}/routes`, { recursive: true }),
+        mkdir(`${process.cwd()}/layouts`, { recursive: true })
     ])
 
     await Promise.allSettled([
-        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${process.cwd()}/src/app.html`),
-        Bun.write(`${process.cwd()}/src/routes/index.html`, '<h1>Hello World</h1>'),
-        Bun.write(`${process.cwd()}/src/routes/index.js`, 'document.title = "Home" \n\nconst { slugs, params } = $ctx')
+        rename(`${process.cwd()}/node_modules/@vyckr/funda/src/app.html`, `${process.cwd()}/app.html`),
+        Bun.write(`${process.cwd()}/routes/index.html`, '<h1>Hello World</h1>'),
+        Bun.write(`${process.cwd()}/routes/index.js`, 'document.title = "Home" \n\nconst { slugs, params } = $ctx')
     ])
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/src/routes.json`, '[]'),
-        Bun.write(`${process.cwd()}/src/slugs.json`, '{}'),
-        Bun.write(`${process.cwd()}/src/layouts.json`, '[]')
+        Bun.write(`${process.cwd()}/routes.json`, '[]'),
+        Bun.write(`${process.cwd()}/slugs.json`, '{}'),
+        Bun.write(`${process.cwd()}/layouts.json`, '[]')
     ])
 }
 
@@ -49,8 +49,8 @@ async function initialize() {
 async function addRoute(route) {
 
     const [routes, routeSlugs] = await Promise.all([
-        Bun.file(`${process.cwd()}/src/routes.json`).json(),
-        Bun.file(`${process.cwd()}/src/slugs.json`).json(),
+        Bun.file(`${process.cwd()}/routes.json`).json(),
+        Bun.file(`${process.cwd()}/slugs.json`).json(),
     ])
 
     /**
@@ -80,7 +80,7 @@ async function addRoute(route) {
 
     validateRoute(route)
 
-    const prefix = `${process.cwd()}/src/routes/${route}`
+    const prefix = `${process.cwd()}/routes/${route}`
 
     if(await exists(`${prefix}/index.html`)) throw new Error(`Route ${route} already exists`)
     if(await exists(`${prefix}/index.js`)) throw new Error(`Route ${route} already exists`)
@@ -93,8 +93,8 @@ async function addRoute(route) {
     routes.push(route)
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/src/routes.json`, JSON.stringify(routes)),
-        Bun.write(`${process.cwd()}/src/slugs.json`, JSON.stringify(routeSlugs))
+        Bun.write(`${process.cwd()}/routes.json`, JSON.stringify(routes)),
+        Bun.write(`${process.cwd()}/slugs.json`, JSON.stringify(routeSlugs))
     ])
 }
 
@@ -105,11 +105,11 @@ async function addRoute(route) {
 async function rmRoute(route) {
 
     const [routes, routeSlugs] = await Promise.all([
-        Bun.file(`${process.cwd()}/src/routes.json`).json(),
-        Bun.file(`${process.cwd()}/src/slugs.json`).json(),
+        Bun.file(`${process.cwd()}/routes.json`).json(),
+        Bun.file(`${process.cwd()}/slugs.json`).json(),
     ])
 
-    const prefix = `${process.cwd()}/src/routes/${route}`
+    const prefix = `${process.cwd()}/routes/${route}`
 
     if(await exists(`${prefix}/index.html`)) await rm(`${prefix}/index.html`)
     if(await exists(`${prefix}/index.js`)) await rm(`${prefix}/index.js`)
@@ -118,8 +118,8 @@ async function rmRoute(route) {
     delete routeSlugs[route]
 
     await Promise.allSettled([
-        Bun.write(`${process.cwd()}/src/routes.json`, JSON.stringify(routes)),
-        Bun.write(`${process.cwd()}/src/slugs.json`, JSON.stringify(routeSlugs))
+        Bun.write(`${process.cwd()}/routes.json`, JSON.stringify(routes)),
+        Bun.write(`${process.cwd()}/slugs.json`, JSON.stringify(routeSlugs))
     ])
 }
 
@@ -129,18 +129,18 @@ async function rmRoute(route) {
  */
 async function addLayout(layout) {
 
-    const file = Bun.file(`${process.cwd()}/src/layouts/${layout}.html`)
+    const file = Bun.file(`${process.cwd()}/layouts/${layout}.html`)
 
     if(await file.exists()) throw new Error(`Layout ${layout} already exists`)
 
     file.writer().end()
 
     /** @type {string[]} */
-    const layouts = await Bun.file(`${process.cwd()}/src/layouts.json`).json()
+    const layouts = await Bun.file(`${process.cwd()}/layouts.json`).json()
 
     layouts.push(layout)
 
-    await Bun.write(`${process.cwd()}/src/layouts.json`, JSON.stringify(layouts))
+    await Bun.write(`${process.cwd()}/layouts.json`, JSON.stringify(layouts))
 }
 
 /**
@@ -149,14 +149,14 @@ async function addLayout(layout) {
  */
 async function rmLayout(layout) {
 
-    const path = `${process.cwd()}/src/layouts/${layout}.html`
+    const path = `${process.cwd()}/layouts/${layout}.html`
 
     if(await exists(path)) await rm(path, { recursive: true })
 
     /** @type {string[]} */
-    const layouts = await Bun.file(`${process.cwd()}/src/layouts.json`).json()
+    const layouts = await Bun.file(`${process.cwd()}/layouts.json`).json()
 
     layouts.splice(layouts.indexOf(layout), 1)
 
-    await Bun.write(`${process.cwd()}/src/layouts.json`, JSON.stringify(layouts))
+    await Bun.write(`${process.cwd()}/layouts.json`, JSON.stringify(layouts))
 }
