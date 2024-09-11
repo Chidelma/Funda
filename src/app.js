@@ -21,18 +21,18 @@ const App = {
      * @returns {Promise<any>}
      */
     async fetchJSON(url) {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Failed to fetch ${url}`, { cause: res.status });
-        return res.json();
+        const res = await fetch(url)
+        if (!res.ok) throw new Error(`Failed to fetch ${url}`, { cause: res.status })
+        return await res.json()
     },
 
     /**
      * Check if the page segments match the path segments.
      * @param {string[]} pageSegs
      * @param {string[]} pathSegs
-     * @returns {Promise<boolean>}
+     * @returns {boolean}
      */
-    async pathsMatch(pageSegs, pathSegs) {
+    pathsMatch(pageSegs, pathSegs) {
 
         if (pageSegs.length !== pathSegs.length) return false;
 
@@ -120,7 +120,7 @@ const App = {
 
             const routeSegs = route.split('/')
 
-            const isMatch = await this.pathsMatch(routeSegs, paths.slice(0, routeSegs.length))
+            const isMatch = this.pathsMatch(routeSegs, paths.slice(0, routeSegs.length))
 
             if (isMatch && routeSegs.length > routeLength) {
                 bestMatchRoute = route;
