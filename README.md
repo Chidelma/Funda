@@ -1,4 +1,4 @@
-# funda
+# MENTALJS
 
 To install dependencies:
 
