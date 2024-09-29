@@ -1,15 +1,30 @@
 const App = {
+
     initBody: '',
     count: 0,
     isRendering: false,
 
+    /** @type {Map<string, string>} */
     layouts: new Map(),
+
+    /** @type {Map<string, any>} */
+    layoutMods: new Map(),
+
+    /** @type {Map<string, string>} */
     routes: new Map(),
+
+    /** @type {Map<string, any>} */
+    routeMods: new Map(),
+
+    /** @type {Map<string, Record<string, number>>} */
+    slugs: new Map(),
+
+    /** @type {Map<string, any>} */
+    store: new Map(),
 
     routesDir: 'routes',
     layoutsDir: 'layouts',
     elementsVar: 'elements',
-    slugsKey: '_slugs',
     indexKey: 'index',
     jsExt: 'js',
     jsonExt: 'json',
@@ -35,10 +50,9 @@ const App = {
     pathsMatch(routeSegs, pathSegs) {
 
         if (routeSegs.length !== pathSegs.length) return false;
-
-        const pathSlugs = JSON.parse(sessionStorage.getItem(this.slugsKey))
         
-        const slugs = pathSlugs[`${routeSegs.join('/')}`] || {};
+        /** @type {Record<string, number>} */
+        const slugs = this.slugs.get(`${routeSegs.join('/')}`) || {};
 
         for (let i = 0; i < pathSegs.length; i++) {
             if (slugs[pathSegs[i]] && routeSegs[i] !== pathSegs[i]) {
@@ -52,34 +66,54 @@ const App = {
     async initializeAssets() {
 
         if(this.routes.size === 0) {
-            const routes = await this.fetchJSON(`${location.origin}/${this.routesDir}.${this.jsonExt}`);
+            const routes = await this.fetchJSON(`${this.routesDir}.${this.jsonExt}`);
             for(const route of routes) {
-                const res = await fetch(`${location.origin}/${this.routesDir}/${route}/${this.indexKey}.${this.htmlExt}`);
-                this.routes.set(route, await res.text());
+                const [res, mod] = await Promise.allSettled([
+                    fetch(`${this.routesDir}/${route}/${this.indexKey}.${this.htmlExt}`),
+                    import(`./${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`)
+                ])
+                
+                if(res.status === "fulfilled") this.routes.set(route, await res.value.text());
+                if(mod.status === "fulfilled") this.routeMods.set(route, mod.value);
             }
         } 
 
         if(this.layouts.size === 0) {
-            const layouts = await this.fetchJSON(`${location.origin}/${this.layoutsDir}.${this.jsonExt}`);
+            const layouts = await this.fetchJSON(`${this.layoutsDir}.${this.jsonExt}`);
             for(const layout of layouts) {
-                const res = await fetch(`${this.layoutsDir}/${layout}.${this.htmlExt}`);
-                this.layouts.set(layout, await res.text());
+                const [res, mod] = await Promise.allSettled([
+                    fetch(`${this.layoutsDir}/${layout}.${this.htmlExt}`),
+                    import(`./${this.layoutsDir}/${layout}.${this.jsExt}`)
+                ])
+
+                if(res.status === "fulfilled") this.layouts.set(layout, await res.value.text())
+                if(mod.status === "fulfilled") this.layoutMods.set(layout, mod.value)
             }
         }
 
-        // Load slugs
-        if(sessionStorage.getItem(this.slugsKey) === null) {
-            sessionStorage.setItem(this.slugsKey, JSON.stringify(await this.fetchJSON(`${location.origin}/slugs.${this.jsonExt}`)));
+        if(this.slugs.size === 0) {
+
+            /** @type {Record<string, Record<string, number>>} */
+            const slugs = await this.fetchJSON(`slugs.${this.jsonExt}`);
+            
+            for(const route in slugs) {
+                this.slugs.set(route, slugs[route])
+            }
         }
 
         if(!this.routes.has('/')) {
-            const res = await fetch(`${location.origin}/${this.routesDir}/${this.indexKey}.${this.htmlExt}`);
+            const res = await fetch(`${this.routesDir}/${this.indexKey}.${this.htmlExt}`);
             this.routes.set('/', await res.text());
+        }
+
+        if(!this.routeMods.has('/')) {
+            const mod = await import(`./${this.routesDir}/${this.indexKey}.${this.jsExt}`);
+            this.routeMods.set('/', mod);
         }
 
         App.initBody = this.routes.get('/');
 
-        globalThis.exports = await import(`${location.origin}/${this.routesDir}/${this.indexKey}.${this.jsExt}`);
+        globalThis.$routeMod = this.routeMods.get('/')
 
         if (!App.isRendering) {
             App.isRendering = true;
@@ -111,6 +145,7 @@ const App = {
             globalThis.$route = '/'
             await this.initializeAssets()
             globalThis.history.replaceState(location.origin, '', '/')
+            globalThis.history.pushState(location.href, '', '/')
             return
         }
 
@@ -133,8 +168,7 @@ const App = {
             route = bestMatchRoute
             params = paths.slice(routeLength)
 
-            const pathSlugs = JSON.parse(sessionStorage.getItem(this.slugsKey))
-            const slugMap = pathSlugs[bestMatchRoute] || {};
+            const slugMap = this.slugs.get(bestMatchRoute) || {};
 
             for (const [key, idx] of Object.entries(slugMap)) {
                 slugs[key] = paths[idx]
@@ -142,13 +176,11 @@ const App = {
 
             globalThis.$ctx = { params, slugs }
             globalThis.$route = route 
-
-            sessionStorage.setItem(this.slugsKey, JSON.stringify(pathSlugs));
         }
 
         if(!route) throw new Error(`Page ${url.pathname} not found`, { cause: 404 })
 
-        await this.loadPage(route)
+        this.loadPage(route)
 
         globalThis.history.pushState(location.href, '', url.pathname);
     },
@@ -157,11 +189,11 @@ const App = {
      * Load and render a page's HTML and JS.
      * @param {string} route
      */
-    async loadPage(route) {
+    loadPage(route) {
 
         App.initBody = this.routes.get(route)
 
-        globalThis.exports = await import(`${location.origin}/${this.routesDir}/${route}/${this.indexKey}.${this.jsExt}`);
+        globalThis.$routeMod = this.routeMods.get(route)
 
         if (!App.isRendering) {
             App.isRendering = true;
@@ -191,12 +223,23 @@ const App = {
 
                 if (attribute.name === ':for') parsed.push(`for(${attribute.value}) {`);
                 if (attribute.name === ':if') parsed.push(`if(${attribute.value}) {`);
+                if (attribute.name === ':else-if') parsed.push(`else if(${attribute.value}) {`);
+                if (attribute.name === ':else') parsed.push(`else {`);
 
                 if (attribute.name === 'layout') {
                     const layoutHTML = this.layouts.get(attribute.value);
+                    if(globalThis.$layoutMod === undefined) globalThis.$layoutMod = {}
+                    globalThis.$layoutMod[attribute.value] = this.layoutMods.get(attribute.value)
+
+                    for(const key in globalThis.$layoutMod[attribute.value]) {
+                        const store = globalThis.$layoutMod[attribute.value][key]
+                        if (store && store.subscribe) this.subscribeToStore(key, store)
+                        else if (store && store.invoke) globalThis[key] = store.invoke()
+                        else this.processGlobalValue(key, store)
+                    }
+
                     const tempLayout = document.createElement('div');
                     tempLayout.innerHTML = layoutHTML;
-
                     this.replaceSlot(tempLayout, element.innerHTML);
                     parsed.push(...this.parseHTML(tempLayout.children));
                 } else {
@@ -205,7 +248,7 @@ const App = {
                     parsed.push(...this.parseHTML(temp.children));
                 }
 
-                if (attribute.name === ':for' || attribute.name === ':if') parsed.push('}');
+                if (attribute.name === ':for' || attribute.name === ':if' || attribute.name === ':else-if' || attribute.name === ':else') parsed.push('}');
 
             } else parsed.push(`${this.elementsVar} += \`${element.outerHTML}\``)
         }
@@ -241,13 +284,13 @@ const App = {
 
                 if (attribute.name.startsWith('@')) {
                 
-                    const eventName = attribute.name.slice(1);
+                    const eventName = attribute.name.slice(1)
 
                     element.addEventListener(eventName, (e) => {
 
                         if (['input', 'change', 'submit'].includes(eventName)) {
 
-                            globalThis[attribute.value](e.target.value);
+                            globalThis[attribute.value](e.target.value)
 
                             if (!App.isRendering) {
                                 App.isRendering = true;
@@ -270,16 +313,6 @@ const App = {
                             App.indexEvents(document.body.children);
                         }
                     });
-                }
-
-                if(attribute.name.includes('href')) {
-
-                    element.addEventListener('click', async (e) => {
-                        if(!attribute.value.startsWith('http')) {
-                            e.preventDefault()
-                            await App.renderPage(new URL(`${location.origin}${attribute.value}`))
-                        }
-                    })
                 }
             }
 
@@ -304,119 +337,126 @@ const App = {
     },
 
     /**
+     * 
+     * @param {string} globalKey
+     * @param {any} value 
+     * @param {Storage} storageType 
+     * @param {string} storeKey 
+     */
+    handleStoreUpdate(globalKey, value, storageType, storeKey) {
+
+        if (typeof value === 'object') storageType.setItem(storeKey, JSON.stringify(value))
+        else storageType.setItem(storeKey, value)
+
+        globalThis[globalKey] = value
+    },
+
+    /**
+     * 
+     * @param {string} globalKey
+     * @param {Storage} storageType 
+     * @param {string} storeKey 
+     */
+    restoreValueFromStorage(globalKey, storageType, storeKey) {
+
+        let restored = false
+
+        const storedValue = storageType.getItem(storeKey)
+
+        if (storedValue) {
+
+            try {
+                globalThis[globalKey] = JSON.parse(storedValue)
+            } catch {
+                globalThis[globalKey] = storedValue
+            }
+
+            restored = true
+        }
+
+        return restored
+    },
+
+    /**
+     * 
+     * @param {string} globalKey 
+     * @param {any} store 
+     */
+    subscribeToStore(globalKey, store) {
+
+        const storeKey = `${globalThis.$route}/${globalKey}`
+        const storageType = globalThis[`${globalKey.startsWith('$') ? 'session' : 'local'}Storage`]
+
+        store.subscribe(val => {
+
+            this.handleStoreUpdate(globalKey, val, storageType, storeKey)
+
+            if (!App.isRendering) {
+                App.isRendering = true
+                this.renderHTML()
+                App.isRendering = false
+            }
+
+            App.indexEvents(document.body.children)
+        })
+
+        const restored = this.restoreValueFromStorage(globalKey, storageType, storeKey)
+        
+        if(!restored) this.handleStoreUpdate(globalKey, store.get(), storageType, storeKey)
+    },
+
+
+    /**
+     * 
+     * @param {string} globalKey 
+     * @param {any} value 
+     */
+    processGlobalValue(globalKey, value) {
+
+        if (globalKey.startsWith('$') || globalKey.startsWith('_')) {
+
+            const storeKey = `${globalThis.$route}/${globalKey}`
+
+            const storageType = globalThis[`${globalKey.startsWith('$') ? 'session' : 'local'}Storage`]
+
+            const restored = this.restoreValueFromStorage(globalKey, storageType, storeKey)
+
+            if(!restored) this.handleStoreUpdate(globalKey, value, storageType, storeKey)
+
+        } else globalThis[globalKey] = value
+    },
+
+    renderHTML() {
+        const temp = document.createElement('div');
+        temp.innerHTML = App.initBody;
+        const parsed = App.parseHTML(temp.children)
+        const lambda = App.getLambda(parsed)
+        document.body.innerHTML = lambda()
+    },
+
+    /**
      * Render the DOM by parsing HTML and invoking a lambda function.
      */
     renderDOM() {
 
         App.count = 0
-    
-        const renderHTML = () => {
 
-            document.body.innerHTML = App.initBody
+        /** @type {(key: string, value: any) => void} */
+        sessionStorage.setItem = (key, value) => this.store.set(key, value)
+
+        /** @type {(key: string) => any} */
+        sessionStorage.getItem = (key) => this.store.get(key)
     
-            const parsed = App.parseHTML(document.body.children)
-            const lambda = App.getLambda(parsed)
-            document.body.innerHTML = lambda()
+        for (const key in globalThis.$routeMod) {
+
+            const store = globalThis.$routeMod[key]
+    
+            if (store && store.subscribe) this.subscribeToStore(key, store)
+            else if (store && store.invoke) globalThis[key] = store.invoke()
+            else this.processGlobalValue(key, store)
         }
     
-        /**
-         * 
-         * @param {string} globalKey
-         * @param {any} value 
-         * @param {Storage} storageType 
-         * @param {string} storeKey 
-         */
-        const handleStoreUpdate = (globalKey, value, storageType, storeKey) => {
-
-            if (typeof value === 'object') storageType.setItem(storeKey, JSON.stringify(value))
-            else storageType.setItem(storeKey, value)
-    
-            globalThis[globalKey] = value
-        }
-        
-        /**
-         * 
-         * @param {string} globalKey
-         * @param {Storage} storageType 
-         * @param {string} storeKey 
-         */
-        const restoreValueFromStorage = (globalKey, storageType, storeKey) => {
-
-            let restored = false
-
-            const storedValue = storageType.getItem(storeKey)
-    
-            if (storedValue) {
-
-                try {
-                    globalThis[globalKey] = JSON.parse(storedValue)
-                } catch {
-                    globalThis[globalKey] = storedValue
-                }
-
-                restored = true
-            }
-
-            return restored
-        }
-    
-        /**
-         * 
-         * @param {string} globalKey 
-         * @param {any} store 
-         */
-        const subscribeToStore = (globalKey, store) => {
-
-            const storeKey = `${globalThis.$route}/${globalKey}`
-            const storageType = globalThis[`${globalKey.startsWith('$') ? 'session' : 'local'}Storage`]
-    
-            store.subscribe(val => {
-
-                handleStoreUpdate(globalKey, val, storageType, storeKey)
-    
-                if (!App.isRendering) {
-                    App.isRendering = true
-                    renderHTML()
-                    App.isRendering = false
-                }
-    
-                App.indexEvents(document.body.children)
-            })
-    
-            const restored = restoreValueFromStorage(globalKey, storageType, storeKey)
-            
-            if(!restored) handleStoreUpdate(globalKey, store.get(), storageType, storeKey)
-        }
-        
-        /**
-         * 
-         * @param {string} globalKey 
-         * @param {any} value 
-         */
-        const processGlobalValue = (globalKey, value) => {
-
-            if (globalKey.startsWith('$') || globalKey.startsWith('_')) {
-
-                const storeKey = `${globalThis.$route}/${globalKey}`
-
-                const storageType = globalThis[`${globalKey.startsWith('$') ? 'session' : 'local'}Storage`]
-    
-                const restored = restoreValueFromStorage(globalKey, storageType, storeKey)
-
-                if(!restored) handleStoreUpdate(globalKey, value, storageType, storeKey)
-
-            } else globalThis[globalKey] = value
-        }
-    
-        for (const key in globalThis.exports) {
-
-            const value = globalThis.exports[key]
-    
-            if (value && value.subscribe) subscribeToStore(key, value)
-            else processGlobalValue(key, value)
-        }
-    
-        renderHTML()
+        this.renderHTML()
     },
 
     /**
@@ -491,8 +531,24 @@ globalThis.$state = (initialValue) => {
     }
 }
 
+globalThis.$computed = (equation) => {
+    return {
+        invoke: new Function('return ' + equation)()
+    }
+}
+
 globalThis.addEventListener('popstate', async (e) => {
+    e.preventDefault()
     await App.renderPage(new URL(e.state))
+})
+
+document.body.addEventListener('click', async (e) => {
+    if(e.target.href) {
+        const url = new URL(e.target.href)
+        if(url.origin !== location.origin) return
+        e.preventDefault()
+        await App.renderPage(url)
+    }
 })
 
 await App.renderPage(new URL(location.origin))
